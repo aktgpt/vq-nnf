@@ -1,25 +1,13 @@
-import glob
 import os
-import random
-import time
+import shutil
 from copy import deepcopy
 from typing import List
 
-import colorcet as cc
 import cv2
-import matplotlib.patches as patches
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
-import shutil
-from tqdm import tqdm
-from pathlib import Path
 import skimage
-
-# data_save_folder = "/mnt/hdd1/users/aktgpt/datasets/template_matching/TinyTLP_comp"
-scale = 0.25
-data_save_folder = f"/mnt/hdd1/users/aktgpt/datasets/template_matching/"
+from tqdm import tqdm
 
 
 def get_rotated_bbox(rotation, image_shape, bbox):
@@ -34,7 +22,10 @@ def get_rotated_bbox(rotation, image_shape, bbox):
     )
     degrees = np.deg2rad(rotation)
     rotation_matrix = np.array(
-        [[np.cos(degrees), -np.sin(degrees)], [np.sin(degrees), np.cos(degrees)],]
+        [
+            [np.cos(degrees), -np.sin(degrees)],
+            [np.sin(degrees), np.cos(degrees)],
+        ]
     )
     bbox_rotated = np.matmul(bbox_all_points_centered, rotation_matrix) + center_query_image
     new_bbox = np.array(
@@ -154,6 +145,12 @@ def make_comp_dataset_rotation(rotations: List[int]):
             image_desc.set_description(f"Processed {pair_idx} pairs")
 
 
-rotations = [0, 60, 120, 180]
-# make_comp_dataset()
-make_comp_dataset_rotation(rotations)
+if __name__ == "__main__":
+    data_save_folder = f"/mnt/hdd1/users/aktgpt/datasets/template_matching/"
+    scales = [0.25, 0.33, 0.5, 0.66, 0.75, 1.0]
+    for scale in scales:
+        data_save_folder = f"/mnt/hdd1/users/aktgpt/datasets/template_matching/scale{scale}/"
+        make_comp_dataset()
+
+    rotations = [0, 60, 120, 180]
+    make_comp_dataset_rotation(rotations)

@@ -51,9 +51,7 @@ def get_kwargs(model_name):
         }
 
 
-def conv3x3(
-    in_planes: int, out_planes: int, stride: int = 1, groups: int = 1, dilation: int = 1
-) -> nn.Conv2d:
+def conv3x3(in_planes: int, out_planes: int, stride: int = 1, groups: int = 1, dilation: int = 1) -> nn.Conv2d:
     """3x3 convolution with padding"""
     return nn.Conv2d(
         in_planes,
@@ -199,9 +197,7 @@ class ResNet(nn.Module):
             weights=kwargs["weights"]  # models.ResNet18_Weights.IMAGENET1K_V1
         ).state_dict()
 
-        self.conv1 = nn.Conv2d(
-            in_channels, self.inplanes, kernel_size=7, stride=2, padding=3, bias=False
-        )
+        self.conv1 = nn.Conv2d(in_channels, self.inplanes, kernel_size=7, stride=2, padding=3, bias=False)
         self.bn1 = self._norm_layer(self.inplanes)
         self.relu = nn.ReLU(inplace=True)  # inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
@@ -219,33 +215,25 @@ class ResNet(nn.Module):
         if self.num_features != current_num_features:
             self.layer1 = self._make_layer(block, 64, layers[0])
             self.inter_num_features.append(self.inplanes)
-            current_num_features = (
-                sum(self.inter_num_features) if self.multi_scale else self.inter_num_features[-1]
-            )
+            current_num_features = sum(self.inter_num_features) if self.multi_scale else self.inter_num_features[-1]
             self.strides.append(4)
 
         if self.num_features != current_num_features:
             self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
             self.inter_num_features.append(self.inplanes)
             self.strides.append(8)
-            current_num_features = (
-                sum(self.inter_num_features) if self.multi_scale else self.inter_num_features[-1]
-            )
+            current_num_features = sum(self.inter_num_features) if self.multi_scale else self.inter_num_features[-1]
 
         if self.num_features != current_num_features:
             self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
             self.inter_num_features.append(self.inplanes)
             self.strides.append(16)
-            current_num_features = (
-                sum(self.inter_num_features) if self.multi_scale else self.inter_num_features[-1]
-            )
+            current_num_features = sum(self.inter_num_features) if self.multi_scale else self.inter_num_features[-1]
         if self.num_features != current_num_features:
             self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
             self.inter_num_features.append(self.inplanes)
             self.strides.append(32)
-            current_num_features = (
-                sum(self.inter_num_features) if self.multi_scale else self.inter_num_features[-1]
-            )
+            current_num_features = sum(self.inter_num_features) if self.multi_scale else self.inter_num_features[-1]
 
         self.load_state_dict(state_dict, strict=False)
 
@@ -259,14 +247,10 @@ class ResNet(nn.Module):
             )
 
         layers = []
-        layers.append(
-            block(self.inplanes, planes, stride, downsample, self.groups, self.base_width)
-        )
+        layers.append(block(self.inplanes, planes, stride, downsample, self.groups, self.base_width))
         self.inplanes = planes * block.expansion
         for _ in range(1, blocks):
-            layers.append(
-                block(self.inplanes, planes, groups=self.groups, base_width=self.base_width)
-            )
+            layers.append(block(self.inplanes, planes, groups=self.groups, base_width=self.base_width))
 
         return nn.Sequential(*layers)
 
@@ -319,31 +303,52 @@ class ResNetHyperColumn(ResNet):
         super().__init__(model_name, in_channels, num_features, multi_scale=True)
         self.stride = stride
 
-    def forward(self, x):
+    def forward(self, x, memory_efficient=True):
         _, _, h, w = x.shape
         out_h = h // self.stride
         out_w = w // self.stride
 
-        out = []
+        # out = []
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
         x = self.maxpool(x)
 
-        out.append(F.interpolate(x, size=(out_h, out_w), mode="bilinear", align_corners=True))
+        out = F.interpolate(x, size=(out_h, out_w), mode="bilinear", align_corners=True)
 
-        if self.layer1 is not None:
-            x = self.layer1(x)
-            out.append(F.interpolate(x, size=(out_h, out_w), mode="bilinear", align_corners=True))
-        if self.layer2 is not None:
-            x = self.layer2(x)
-            out.append(F.interpolate(x, size=(out_h, out_w), mode="bilinear", align_corners=True))
-        if self.layer3 is not None:
-            x = self.layer3(x)
-            out.append(F.interpolate(x, size=(out_h, out_w), mode="bilinear", align_corners=True))
-        if self.layer4 is not None:
-            x = self.layer4(x)
-            out.append(F.interpolate(x, size=(out_h, out_w), mode="bilinear", align_corners=True))
-        out = torch.cat(out, dim=1)
-        # out = out / torch.norm(out, dim=1, keepdim=True)
+        if not memory_efficient:
+            if self.layer1 is not None:
+                x = self.layer1(x)
+                out.append(F.interpolate(x, size=(out_h, out_w), mode="bilinear", align_corners=True))
+            if self.layer2 is not None:
+                x = self.layer2(x)
+                out.append(F.interpolate(x, size=(out_h, out_w), mode="bilinear", align_corners=True))
+            if self.layer3 is not None:
+                x = self.layer3(x)
+                out.append(F.interpolate(x, size=(out_h, out_w), mode="bilinear", align_corners=True))
+            if self.layer4 is not None:
+                x = self.layer4(x)
+                out.append(F.interpolate(x, size=(out_h, out_w), mode="bilinear", align_corners=True))
+            out = torch.cat(out, dim=1)
+        else:
+            if self.layer1 is not None:
+                x = self.layer1(x)
+                out = torch.cat(
+                    [out, F.interpolate(x, size=(out_h, out_w), mode="bilinear", align_corners=True)], dim=1
+                )
+            if self.layer2 is not None:
+                x = self.layer2(x)
+                out = torch.cat(
+                    [out, F.interpolate(x, size=(out_h, out_w), mode="bilinear", align_corners=True)], dim=1
+                )
+            if self.layer3 is not None:
+                x = self.layer3(x)
+                out = torch.cat(
+                    [out, F.interpolate(x, size=(out_h, out_w), mode="bilinear", align_corners=True)], dim=1
+                )
+            if self.layer4 is not None:
+                x = self.layer4(x)
+                out = torch.cat(
+                    [out, F.interpolate(x, size=(out_h, out_w), mode="bilinear", align_corners=True)], dim=1
+                )
         return out

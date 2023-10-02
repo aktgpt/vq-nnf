@@ -1,14 +1,7 @@
 import glob
 import os
 import random
-import time
-from copy import deepcopy
-from typing import List
 
-import colorcet as cc
-import cv2
-import matplotlib.patches as patches
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -65,6 +58,7 @@ df = pd.DataFrame(
         "clip_id": all_clip_ids,
     }
 )
+
 ## pick 10 random samples from each occlusion category with weighted sampling based on number of files in each clip_id
 df = df.sample(frac=1).reset_index(drop=True)
 df1 = df.groupby(["occlusions", "clip_id"]).head(15).reset_index(drop=True)

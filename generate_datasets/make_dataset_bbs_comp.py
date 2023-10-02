@@ -1,24 +1,12 @@
-import glob
 import os
-import random
-import time
-from copy import deepcopy
+import shutil
 from typing import List
 
-import colorcet as cc
 import cv2
-import matplotlib.patches as patches
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
-import shutil
-from tqdm import tqdm
-from pathlib import Path
 import skimage
-
-dataset_folder = "/mnt/hdd1/users/aktgpt/datasets/template_matching/BBS"
-data_save_folder = "/mnt/hdd1/users/aktgpt/datasets/template_matching"
+from tqdm import tqdm
 
 
 def get_rotated_bbox(rotation, image_shape, bbox):
@@ -33,7 +21,10 @@ def get_rotated_bbox(rotation, image_shape, bbox):
     )
     degrees = np.deg2rad(rotation)
     rotation_matrix = np.array(
-        [[np.cos(degrees), -np.sin(degrees)], [np.sin(degrees), np.cos(degrees)],]
+        [
+            [np.cos(degrees), -np.sin(degrees)],
+            [np.sin(degrees), np.cos(degrees)],
+        ]
     )
     bbox_rotated = np.matmul(bbox_all_points_centered, rotation_matrix) + center_query_image
     new_bbox = np.array(
@@ -95,9 +86,7 @@ def make_comp_dataset_rotation(timesteps: List[int], iterations: List[int], rota
             for rotation in rotations:
                 pair_idx = 1
                 annot_csv = pd.read_csv(f"dataset_annotations/bbs{timestep}_iter{i}_dataset.csv")
-                save_folder = os.path.join(
-                    data_save_folder, f"BBS{timestep}_iter{i}_rot{rotation}/"
-                )
+                save_folder = os.path.join(data_save_folder, f"BBS{timestep}_iter{i}_rot{rotation}/")
 
                 if not os.path.exists(save_folder):
                     os.makedirs(save_folder, exist_ok=True)
@@ -116,12 +105,8 @@ def make_comp_dataset_rotation(timesteps: List[int], iterations: List[int], rota
                     ]
                     query_bbox = row[["query_x", "query_y", "query_w", "query_h"]].values
                     query_image = cv2.imread(query_path, -1)
-                    query_image = (skimage.transform.rotate(query_image, rotation) * 255).astype(
-                        np.uint8
-                    )
-                    query_bbox_rotated = get_rotated_bbox(
-                        rotation, query_image.shape[:2], query_bbox
-                    )
+                    query_image = (skimage.transform.rotate(query_image, rotation) * 255).astype(np.uint8)
+                    query_bbox_rotated = get_rotated_bbox(rotation, query_image.shape[:2], query_bbox)
 
                     temp_name = f"pair{str(pair_idx).zfill(4)}_frm1_{temp_path.split('/')[8]}"
                     query_name = f"pair{str(pair_idx).zfill(4)}_frm2_{query_path.split('/')[8]}"
@@ -148,8 +133,13 @@ def make_comp_dataset_rotation(timesteps: List[int], iterations: List[int], rota
                     image_desc.set_description(f"Processed {pair_idx} pairs")
 
 
-iterations = 5
-timesteps = [25, 50, 100]
-rotations = [60, 120, 180]
-# make_comp_dataset(timesteps, iterations)
-make_comp_dataset_rotation(timesteps, iterations, rotations)
+if __name__ == "__main__":
+    dataset_folder = "/mnt/hdd1/users/aktgpt/datasets/template_matching/BBS"
+    data_save_folder = "/mnt/hdd1/users/aktgpt/datasets/template_matching"
+
+    iterations = 5
+    timesteps = [25, 50, 100]
+    make_comp_dataset(timesteps, iterations)
+
+    rotations = [60, 120, 180]
+    make_comp_dataset_rotation(timesteps, iterations, rotations)

@@ -48,3 +48,6 @@ exps/*
 exps_final/*
 *.jpg
 *.txt
+figures/
+.vscode/
+results/

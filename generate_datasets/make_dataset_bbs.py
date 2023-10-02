@@ -1,21 +1,9 @@
 import glob
 import os
 import random
-import time
-from copy import deepcopy
-from typing import List
 
-import colorcet as cc
-import cv2
-import matplotlib.patches as patches
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import torch
-from torch import nn
-
-from feature_extraction import PixelFeatureExtractor
-from matchers.template_matching2 import TemplateMatcher
 
 random.seed(42)
 
@@ -105,5 +93,3 @@ for iter in range(5):
     dataset_df.to_csv(
         f"dataset_annotations/bbs{query_timestep}_iter{iter+1}_dataset.csv", index=False
     )
-
-x = 1

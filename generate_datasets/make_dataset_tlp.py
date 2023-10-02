@@ -1,19 +1,6 @@
 import glob
 import os
-import time
-from copy import deepcopy
-from typing import List
 
-import colorcet as cc
-import cv2
-import matplotlib.patches as patches
-import matplotlib.pyplot as plt
-import pandas as pd
-import torch
-from torch import nn
-import torch
-from feature_extraction import PixelFeatureExtractor
-from matchers.template_matching2 import TemplateMatcher
 import numpy as np
 import pandas as pd
 
@@ -57,4 +44,3 @@ df = pd.DataFrame(
 )
 df.to_csv("tiny_tlp_dataset.csv", index=False)
 
-x = 1
